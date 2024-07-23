@@ -7,6 +7,16 @@ import os
 from datetime import timedelta
 from flask_session import Session
 
+# Add this line to get the DELETE_DB_ON_STARTUP environment variable
+DELETE_DB_ON_STARTUP = os.environ.get('DELETE_DB_ON_STARTUP', 'false').lower() == 'true'
+
+# Function to delete all tables
+def delete_all_tables():
+    with app.app_context():
+        db.reflect()
+        db.drop_all()
+        print("All database tables dropped.")
+
 app = Flask(__name__, template_folder=os.path.abspath('templates'), static_folder=os.path.abspath('static'))
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your_secret_key')
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -35,6 +45,8 @@ def connect_to_database(retries=5, delay=5):
     for attempt in range(retries):
         try:
             with app.app_context():
+                if DELETE_DB_ON_STARTUP:
+                    delete_all_tables()
                 db.create_all()
             print("Successfully connected to the database!")
             return
@@ -48,4 +60,29 @@ def connect_to_database(retries=5, delay=5):
 
 if __name__ == '__main__':
     connect_to_database()
+    with app.app_context():
+        db.create_all()
+        if not os.path.exists('migrations'):
+            os.system('flask db init')
+        os.system('flask db migrate')
+        os.system('flask db upgrade')
+        
+        # Verify that the 'temperature' column exists
+        from sqlalchemy import inspect, text
+        inspector = inspect(db.engine)
+        columns = inspector.get_columns('role')
+        if 'temperature' not in [col['name'] for col in columns]:
+            print("Warning: 'temperature' column is still missing from 'role' table!")
+            print("Attempting to add 'temperature' column manually...")
+            with db.engine.connect() as connection:
+                connection.execute(text("ALTER TABLE role ADD COLUMN IF NOT EXISTS temperature FLOAT DEFAULT 0.7 NOT NULL"))
+                connection.execute(text("UPDATE role SET temperature = 0.7 WHERE temperature IS NULL"))
+            print("Manual addition of 'temperature' column completed.")
+        else:
+            print("'temperature' column exists in 'role' table.")
+    
+    # Ensure all models are up-to-date with the database schema
+    with app.app_context():
+        db.create_all()
+    
     app.run(host='0.0.0.0', port=5000)

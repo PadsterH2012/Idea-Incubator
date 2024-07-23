@@ -49,6 +49,8 @@ class Role(db.Model):
     provider = db.Column(db.String(50), nullable=True)
     model = db.Column(db.String(100), nullable=True)
     system_prompt = db.Column(db.Text, nullable=True)
+    web_search = db.Column(db.Boolean, default=False)
+    temperature = db.Column(db.Float, default=0.7)
 
     def __repr__(self):
         return f'<Role {self.name}>'
@@ -59,5 +61,7 @@ class Role(db.Model):
             'name': self.name,
             'provider': self.provider,
             'model': self.model,
-            'system_prompt': self.system_prompt
+            'system_prompt': self.system_prompt,
+            'web_search': self.web_search,
+            'temperature': self.temperature
         }

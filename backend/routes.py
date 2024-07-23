@@ -172,6 +172,8 @@ def roles_settings():
             role.provider = request.form.get('provider')
             role.model = request.form.get('model')
             role.system_prompt = request.form.get('system_prompt')
+            role.web_search = 'web_search' in request.form
+            role.temperature = float(request.form.get('temperature', 0.7))
             db.session.commit()
             return jsonify({'message': 'Role updated successfully!'})
         return jsonify({'message': 'Role not found'}), 404
@@ -182,25 +184,18 @@ def roles_settings():
     
     return render_template('roles_settings.html', roles=roles, providers=providers, models=models)
 
+from role_prompts import ROLE_PROMPTS
+
 @app.route('/initialize_roles', methods=['POST'])
 @login_required
 def initialize_roles():
-    default_roles = [
-        "AI Agent - Project Planner",
-        "AI Agent - Project Writer",
-        "AI Agent - Architect",
-        "AI Agent - UX SME",
-        "AI Agent - DB SME",
-        "AI Agent - Coding SME",
-        "AI Agent - Developer",
-        "AI Agent - Web Searcher",
-        "AI Agent - Code Validator",
-        "AI Agent - Application Tester"
-    ]
-
-    for role_name in default_roles:
-        if not Role.query.filter_by(name=role_name).first():
-            new_role = Role(name=role_name)
+    for role_name, role_data in ROLE_PROMPTS.items():
+        existing_role = Role.query.filter_by(name=role_name).first()
+        if existing_role:
+            existing_role.system_prompt = role_data['prompt']
+            existing_role.temperature = role_data['temperature']
+        else:
+            new_role = Role(name=role_name, system_prompt=role_data['prompt'], temperature=role_data['temperature'])
             db.session.add(new_role)
     
     db.session.commit()

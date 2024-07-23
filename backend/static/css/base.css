@@ -151,3 +151,38 @@ button:hover {
 .dropdown:hover .dropdown-content {
     display: block;
 }
+
+/* Styles for roles settings page */
+.role-card {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.role-form label {
+    display: block;
+    margin-top: 10px;
+}
+
+.role-form select,
+.role-form textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.system-prompt-textarea {
+    min-height: 150px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+}
+
+.role-form button {
+    margin-top: 10px;
+}
