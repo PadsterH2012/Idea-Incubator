@@ -7,21 +7,24 @@ services:
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: mydatabase
+      POSTGRES_DB: idea_incubator
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - idea_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d idea_incubator"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   backend:
     build: ./backend
     restart: always
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
-      DATABASE_URL: postgres://user:password@db:5432/mydatabase
-
+      DATABASE_URL: postgresql://user:password@db:5432/idea_incubator
     ports:
       - "5000:5000"
-    volumes:
-      - db_data:/var/lib/postgresql/data
 volumes:
-  db_data:
+  idea_db_data:

@@ -7,7 +7,10 @@ import os
 
 app = Flask(__name__, template_folder=os.path.abspath('templates'), static_folder=os.path.abspath('static'))
 app.secret_key = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:password@db:5432/mydatabase'
+
+# Use the DATABASE_URL environment variable
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://user:password@db:5432/idea_incubator')
+
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
