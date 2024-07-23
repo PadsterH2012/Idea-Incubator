@@ -1,7 +1,7 @@
 from flask import jsonify, session, render_template, url_for, request, redirect, make_response
 from werkzeug.security import generate_password_hash, check_password_hash
 from urllib.parse import urlparse
-from models import User, Project, ProviderSettings
+from models import User, Project, ProviderSettings, Role
 from app import app, db
 from functools import wraps
 import json
@@ -162,8 +162,49 @@ def agents_settings():
 @app.route('/roles_settings', methods=['GET', 'POST'])
 @login_required
 def roles_settings():
-    # Placeholder for roles settings logic
-    return render_template('roles_settings.html')
+    user_id = session['user_id']
+    provider_settings = ProviderSettings.query.filter_by(user_id=user_id).first()
+    
+    if request.method == 'POST':
+        role_id = request.form.get('role_id')
+        role = Role.query.get(role_id)
+        if role:
+            role.provider = request.form.get('provider')
+            role.model = request.form.get('model')
+            role.system_prompt = request.form.get('system_prompt')
+            db.session.commit()
+            return jsonify({'message': 'Role updated successfully!'})
+        return jsonify({'message': 'Role not found'}), 404
+
+    roles = Role.query.all()
+    providers = [provider_settings.provider_name] if provider_settings else []
+    models = provider_settings.models.split(',') if provider_settings and provider_settings.models else []
+    
+    return render_template('roles_settings.html', roles=roles, providers=providers, models=models)
+
+@app.route('/initialize_roles', methods=['POST'])
+@login_required
+def initialize_roles():
+    default_roles = [
+        "AI Agent - Project Planner",
+        "AI Agent - Project Writer",
+        "AI Agent - Architect",
+        "AI Agent - UX SME",
+        "AI Agent - DB SME",
+        "AI Agent - Coding SME",
+        "AI Agent - Developer",
+        "AI Agent - Web Searcher",
+        "AI Agent - Code Validator",
+        "AI Agent - Application Tester"
+    ]
+
+    for role_name in default_roles:
+        if not Role.query.filter_by(name=role_name).first():
+            new_role = Role(name=role_name)
+            db.session.add(new_role)
+    
+    db.session.commit()
+    return jsonify({'message': 'Roles initialized successfully!'})
 
 @app.route('/projects')
 @login_required

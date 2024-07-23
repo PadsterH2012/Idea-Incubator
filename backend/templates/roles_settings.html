@@ -4,6 +4,63 @@
 
 {% block content %}
 <h1>Roles Settings</h1>
-<p>This is where you can manage roles.</p>
-<!-- Add your roles management form or content here -->
+<button id="initializeRoles">Initialize Default Roles</button>
+<div id="rolesContainer">
+    {% for role in roles %}
+    <div class="role-card">
+        <h2>{{ role.name }}</h2>
+        <form class="role-form" data-role-id="{{ role.id }}">
+            <label for="provider-{{ role.id }}">Provider:</label>
+            <select id="provider-{{ role.id }}" name="provider">
+                {% for provider in providers %}
+                <option value="{{ provider }}" {% if role.provider|lower == provider|lower %}selected{% endif %}>{{ provider }}</option>
+                {% endfor %}
+            </select>
+            
+            <label for="model-{{ role.id }}">Model:</label>
+            <select id="model-{{ role.id }}" name="model">
+                {% for model in models %}
+                <option value="{{ model }}" {% if role.model|lower == model|lower %}selected{% endif %}>{{ model }}</option>
+                {% endfor %}
+            </select>
+            
+            <label for="system-prompt-{{ role.id }}">System Prompt:</label>
+            <textarea id="system-prompt-{{ role.id }}" name="system_prompt">{{ role.system_prompt or '' }}</textarea>
+            
+            <button type="submit">Update Role</button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+document.getElementById('initializeRoles').addEventListener('click', function() {
+    fetch('/initialize_roles', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            location.reload();
+        })
+        .catch(error => console.error('Error:', error));
+});
+
+document.querySelectorAll('.role-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const roleId = this.dataset.roleId;
+        const formData = new FormData(this);
+        formData.append('role_id', roleId);
+
+        fetch('/roles_settings', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+        })
+        .catch(error => console.error('Error:', error));
+    });
+});
+</script>
 {% endblock %}
