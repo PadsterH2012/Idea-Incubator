@@ -3,3 +3,4 @@ Flask-SQLAlchemy
 Flask-Migrate
 Werkzeug
 psycopg2-binary
+flask-session

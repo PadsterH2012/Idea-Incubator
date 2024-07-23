@@ -8,6 +8,7 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: idea_incubator
+      POSTGRES_INITDB_ARGS: "--shared_buffers=256MB --work_mem=16MB"
     volumes:
       - idea_db_data:/var/lib/postgresql/data
     healthcheck:
@@ -15,6 +16,12 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
 
   backend:
     build: ./backend

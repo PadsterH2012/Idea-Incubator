@@ -4,9 +4,17 @@ from flask_migrate import Migrate
 import time
 from sqlalchemy.exc import OperationalError
 import os
+from datetime import timedelta
+from flask_session import Session
 
 app = Flask(__name__, template_folder=os.path.abspath('templates'), static_folder=os.path.abspath('static'))
-app.secret_key = 'your_secret_key'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your_secret_key')
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+app.config['SESSION_FILE_DIR'] = os.path.join(app.root_path, 'flask_session')
+app.config['SESSION_USE_SIGNER'] = True
+Session(app)
 
 # Use the DATABASE_URL environment variable
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://user:password@db:5432/idea_incubator')

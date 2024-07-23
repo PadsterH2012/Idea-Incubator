@@ -1,7 +1,20 @@
-from flask import jsonify, session, render_template, url_for, request
+from flask import jsonify, session, render_template, url_for, request, redirect, make_response
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import User
+from urllib.parse import urlparse
+from models import User, Project
 from app import app, db
+from functools import wraps
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            app.logger.warning("User not in session, redirecting to login")
+            if request.headers.get('Accept') == 'application/json':
+                return jsonify({'message': 'Unauthorized'}), 401
+            return redirect(url_for('login', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -37,9 +50,18 @@ def login():
         user = User.query.filter_by(username=data['username']).first()
         
         if user and check_password_hash(user.password, data['password']):
+            session.clear()
             session['user_id'] = user.id
-            return jsonify({'message': 'Login successful!', 'redirect': url_for('dashboard')})
+            session.permanent = True
+            app.logger.info(f"User {user.id} logged in successfully")
+            next_page = request.args.get('next')
+            if not next_page or urlparse(next_page).netloc != '':
+                next_page = url_for('dashboard')
+            response = jsonify({'message': 'Login successful!', 'redirect': next_page})
+            response.set_cookie('session', session.sid, httponly=True, secure=True, samesite='Strict')
+            return response
         
+        app.logger.warning(f"Failed login attempt for username: {data['username']}")
         return jsonify({'message': 'Invalid credentials!'}), 401
     
     return render_template('login.html')
@@ -102,3 +124,71 @@ def app_settings():
     
     current_theme = session.get('theme', 'light')
     return render_template('app_settings.html', current_theme=current_theme)
+
+@app.route('/projects')
+@login_required
+def projects_page():
+    app.logger.info(f"Session: {session}")
+    app.logger.info(f"Request headers: {request.headers}")
+    app.logger.info(f"Request cookies: {request.cookies}")
+    
+    app.logger.info(f"User {session['user_id']} accessing projects page")
+    
+    user = User.query.get(session['user_id'])
+    projects = Project.query.filter_by(user_id=session['user_id']).all()
+    
+    if request.headers.get('Accept') == 'application/json':
+        return jsonify({'projects': [project.to_dict() for project in projects]})
+    else:
+        return render_template('projects.html', username=user.username, projects=projects)
+
+@app.after_request
+def after_request(response):
+    app.logger.info(f"After request - Session: {session}")
+    app.logger.info(f"After request - Response headers: {response.headers}")
+    return response
+
+@app.route('/projects', methods=['GET'])
+def get_projects():
+    if 'user_id' not in session:
+        return jsonify({'message': 'Unauthorized'}), 401
+    user_id = session['user_id']
+    projects = Project.query.filter_by(user_id=user_id).all()
+    app.logger.info(f"User ID: {user_id}, Number of projects: {len(projects)}")
+    for project in projects:
+        app.logger.info(f"Project ID: {project.id}, Name: {project.name}")
+    return jsonify({'projects': [project.to_dict() for project in projects]})
+
+@app.route('/project', methods=['POST'])
+def create_project():
+    if 'user_id' not in session:
+        return jsonify({'message': 'Unauthorized'}), 401
+    data = request.json
+    new_project = Project(name=data['name'], description=data['description'], user_id=session['user_id'])
+    db.session.add(new_project)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Project created successfully'})
+
+@app.route('/project/<int:project_id>', methods=['GET', 'PUT', 'DELETE'])
+def manage_project(project_id):
+    if 'user_id' not in session:
+        return jsonify({'message': 'Unauthorized'}), 401
+    
+    project = Project.query.filter_by(id=project_id, user_id=session['user_id']).first()
+    if not project:
+        return jsonify({'message': 'Project not found'}), 404
+
+    if request.method == 'GET':
+        return jsonify(project.to_dict())
+    
+    elif request.method == 'PUT':
+        data = request.json
+        project.name = data['name']
+        project.description = data['description']
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Project updated successfully'})
+    
+    elif request.method == 'DELETE':
+        db.session.delete(project)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Project deleted successfully'})

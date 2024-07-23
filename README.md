@@ -5,9 +5,8 @@ Idea Incubator is a web application designed to help users capture, develop, and
 ## Features
 
 - User authentication system (registration, login, logout)
-- Idea creation and management
-- Collaborative features (commenting, sharing)
-- User dashboard for idea overview
+- Project creation and management
+- User dashboard for project overview
 - User and application settings
 - Responsive design with light/dark mode
 - RESTful API structure
@@ -45,11 +44,13 @@ idea-incubator/
 │   │   ├── register.html
 │   │   ├── dashboard.html
 │   │   ├── user_settings.html
-│   │   └── app_settings.html
+│   │   ├── app_settings.html
+│   │   └── projects.html
 │   ├── static/
 │   │   └── css/
 │   │       ├── base.css
-│   │       └── dark-theme.css
+│   │       ├── dark-theme.css
+│   │       └── projects.css
 │   ├── app.py
 │   ├── routes.py
 │   ├── models.py
@@ -66,8 +67,9 @@ idea-incubator/
 
 1. Visit the homepage and register a new account
 2. Log in with your credentials
-3. Start creating and managing your ideas from the dashboard
-4. Customize your experience in the user and app settings
+3. Navigate to the Projects page to create and manage your projects
+4. Use the dashboard for an overview of your activities
+5. Customize your experience in the user and app settings
 
 ## Development
 
@@ -116,6 +118,9 @@ This project uses Flask-Migrate for database migrations. To create and apply mig
 - GET `/dashboard`: Access user dashboard
 - GET, POST `/user_settings`: View and update user settings
 - GET, POST `/app_settings`: View and update application settings
+- GET `/projects`: View all projects
+- POST `/project`: Create a new project
+- GET, PUT, DELETE `/project/<int:project_id>`: View, update, or delete a specific project
 
 ## Security Features
 
