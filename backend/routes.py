@@ -3,17 +3,24 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from urllib.parse import urlparse
 from models import User, Project, ProviderSettings, Role
 from app import app, db
+from flask_login import login_user, login_required, logout_user, current_user
 from functools import wraps
 import json
+
+@app.route('/project/<int:project_id>/interact')
+@login_required
+def project_interaction(project_id):
+    project = Project.query.get_or_404(project_id)
+    return render_template('project_interaction.html', project=project)
 
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            app.logger.warning("User not in session, redirecting to login")
+            app.logger.warning("User not in session, redirecting to index")
             if request.headers.get('Accept') == 'application/json':
                 return jsonify({'message': 'Unauthorized'}), 401
-            return redirect(url_for('login', next=request.url))
+            return redirect(url_for('index', next=request.url))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -37,8 +44,11 @@ def register():
     
     return jsonify({'message': 'User registered successfully!'})
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+
     if request.method == 'POST':
         if request.is_json:
             data = request.get_json()
@@ -51,45 +61,40 @@ def login():
         user = User.query.filter_by(username=data['username']).first()
         
         if user and check_password_hash(user.password, data['password']):
-            session.clear()
-            session['user_id'] = user.id
-            session.permanent = True
+            login_user(user)
+            session['user_id'] = user.id  # Explicitly set user_id in session
             app.logger.info(f"User {user.id} logged in successfully")
+            app.logger.info(f"Session after login: {session}")
             next_page = request.args.get('next')
             if not next_page or urlparse(next_page).netloc != '':
                 next_page = url_for('dashboard')
-            response = jsonify({'message': 'Login successful!', 'redirect': next_page})
-            response.set_cookie('session', session.sid, httponly=True, secure=True, samesite='Strict')
-            return response
+            return jsonify({'message': 'Login successful!', 'redirect': next_page})
         
         app.logger.warning(f"Failed login attempt for username: {data['username']}")
         return jsonify({'message': 'Invalid credentials!'}), 401
     
-    return render_template('login.html')
+    return render_template('index.html')
 
 @app.route('/logout', methods=['POST'])
+@login_required
 def logout():
-    session.pop('user_id', None)
+    logout_user()
     return jsonify({'message': 'Logged out successfully!'})
-
-@app.route('/')
-def index():
-    return render_template('index.html')
 
 @app.route('/login')
 def login_page():
-    return render_template('login.html')
+    return redirect(url_for('index'))
 
 @app.route('/register')
 def register_page():
     return render_template('register.html')
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
-    if 'user_id' not in session:
-        return jsonify({'message': 'Unauthorized'}), 401
-    user = User.query.get(session['user_id'])
-    return render_template('dashboard.html', username=user.username)
+    app.logger.info(f"Accessing dashboard. User ID in session: {session.get('user_id')}")
+    app.logger.info(f"Current user: {current_user}")
+    return render_template('dashboard.html', username=current_user.username)
 
 @app.route('/user_settings', methods=['GET', 'POST'])
 def user_settings():

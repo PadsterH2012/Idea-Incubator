@@ -15,7 +15,7 @@
                         <div class="project-actions">
                             <button onclick="editProject({{ project.id }})" class="btn btn-sm btn-edit">Edit</button>
                             <button onclick="deleteProject({{ project.id }})" class="btn btn-sm btn-danger">Delete</button>
-                            <button onclick="continueProject({{ project.id }})" class="btn btn-sm btn-continue">Continue</button>
+                            <button onclick="window.location.href='{{ url_for('project_interaction', project_id=project.id) }}'" class="btn btn-sm btn-continue">Continue</button>
                         </div>
                     </div>
                 {% endfor %}
@@ -184,10 +184,7 @@ function deleteProject(id) {
 }
 
 function continueProject(id) {
-    // Add your logic here to continue working on the project
-    console.log(`Continuing project with id: ${id}`);
-    // For example, you might want to redirect to a project detail page:
-    // window.location.href = `/project/${id}/detail`;
+    window.location.href = `/project/${id}/interact`;
 }
 </script>
 {% endblock %}

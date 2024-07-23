@@ -25,7 +25,7 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
     
     const formData = new FormData(this);
     
-    fetch('{{ url_for('login') }}', {
+    fetch('{{ url_for('index') }}', {
         method: 'POST',
         body: formData
     })

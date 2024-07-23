@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/project_interaction.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="project-interaction">
+    <h1>{{ project.title }}</h1>
+    <div id="chat-board" class="chat-board">
+        <!-- Chat messages will be dynamically added here -->
+    </div>
+    <div class="message-input">
+        <textarea id="message-text" rows="3" placeholder="Type your message here..."></textarea>
+        <button id="send-button">Send</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add JavaScript for handling chat functionality here
+    document.getElementById('send-button').addEventListener('click', function() {
+        var messageText = document.getElementById('message-text').value;
+        if (messageText.trim() !== '') {
+            // Here you would typically send the message to the server
+            // For now, we'll just add it to the chat board
+            var chatBoard = document.getElementById('chat-board');
+            var messageElement = document.createElement('div');
+            messageElement.textContent = messageText;
+            chatBoard.appendChild(messageElement);
+            document.getElementById('message-text').value = '';
+        }
+    });
+</script>
+{% endblock %}
