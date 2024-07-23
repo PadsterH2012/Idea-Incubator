@@ -10,6 +10,12 @@ app.secret_key = 'your_secret_key'
 
 # Use the DATABASE_URL environment variable
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://user:password@db:5432/idea_incubator')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_size': 10,
+    'max_overflow': 20,
+    'pool_pre_ping': True,
+}
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
