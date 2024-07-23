@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Provider Settings{% endblock %}
+
+{% block content %}
+<h1>Provider Settings</h1>
+<form method="POST" action="{{ url_for('provider_settings') }}">
+    <label for="provider_name">Provider:</label>
+    <select name="provider_name" id="provider_name">
+        {% for provider in providers %}
+        <option value="{{ provider }}"
+                {% if provider_settings and provider_settings.provider_name == provider %}
+                selected
+                {% endif %}>
+            {{ provider }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <label for="ollama_url">Ollama URL:</label>
+    <input type="text" name="ollama_url" id="ollama_url" value="{{ provider_settings.ollama_url if provider_settings else '' }}">
+
+    <label for="models">Models (comma-separated):</label>
+    <input type="text" name="models" id="models" value="{{ provider_settings.models if provider_settings else '' }}">
+
+    <button type="submit">Save Settings</button>
+</form>
+{% endblock %}

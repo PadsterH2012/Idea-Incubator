@@ -17,8 +17,16 @@
             <ul>
                 <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
                 <li><a href="{{ url_for('projects_page') }}">Projects</a></li>
-                <li><a href="{{ url_for('user_settings') }}">User Settings</a></li>
-                <li><a href="{{ url_for('app_settings') }}">App Settings</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropbtn">Settings</a>
+                    <div class="dropdown-content">
+                        <a href="{{ url_for('user_settings') }}">User Settings</a>
+                        <a href="{{ url_for('app_settings') }}">App Settings</a>
+                        <a href="{{ url_for('provider_settings') }}">Provider Settings</a>
+                        <a href="{{ url_for('agents_settings') }}">Agents</a>
+                        <a href="{{ url_for('roles_settings') }}">Roles</a>
+                    </div>
+                </li>
                 <li><a href="#" id="logoutButton">Logout</a></li>
             </ul>
         </nav>
