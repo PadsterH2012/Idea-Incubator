@@ -23,23 +23,26 @@ def register():
     
     return jsonify({'message': 'User registered successfully!'})
 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.is_json:
-        data = request.get_json()
-    else:
-        data = request.form
+    if request.method == 'POST':
+        if request.is_json:
+            data = request.get_json()
+        else:
+            data = request.form
 
-    if not data or 'username' not in data or 'password' not in data:
-        return jsonify({'message': 'Missing username or password'}), 400
+        if not data or 'username' not in data or 'password' not in data:
+            return jsonify({'message': 'Missing username or password'}), 400
+        
+        user = User.query.filter_by(username=data['username']).first()
+        
+        if user and check_password_hash(user.password, data['password']):
+            session['user_id'] = user.id
+            return jsonify({'message': 'Login successful!', 'redirect': url_for('dashboard')})
+        
+        return jsonify({'message': 'Invalid credentials!'}), 401
     
-    user = User.query.filter_by(username=data['username']).first()
-    
-    if user and check_password_hash(user.password, data['password']):
-        session['user_id'] = user.id
-        return jsonify({'message': 'Login successful!', 'redirect': url_for('dashboard')})
-    
-    return jsonify({'message': 'Invalid credentials!'}), 401
+    return render_template('login.html')
 
 @app.route('/logout', methods=['POST'])
 def logout():
