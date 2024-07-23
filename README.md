@@ -110,6 +110,24 @@ This project uses Flask-Migrate for database migrations. To create and apply mig
    flask db upgrade
    ```
 
+### Recent Database Changes
+
+A new `temperature` column has been added to the `Role` model. This column stores a float value with a default of 0.7. The migration script `add_temperature_to_role.py` has been created to handle this change.
+
+To apply this change to your database:
+
+1. Ensure you're in the backend container:
+   ```
+   docker-compose exec backend bash
+   ```
+
+2. Run the database upgrade:
+   ```
+   flask db upgrade
+   ```
+
+If you encounter any issues with the migration, the application will attempt to add the column manually during startup.
+
 ## API Endpoints
 
 - POST `/register`: Register a new user
