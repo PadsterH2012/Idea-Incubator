@@ -1,19 +1,17 @@
-# Py_Flask_Boilerplate
+# Idea Incubator
 
-A robust boilerplate for Flask applications with user authentication, PostgreSQL database integration, and Docker containerization.
+Idea Incubator is a web application designed to help users capture, develop, and track their innovative ideas. Built with Flask and PostgreSQL, this application provides a robust platform for idea management and collaboration.
 
 ## Features
 
-- User registration and login system
-- PostgreSQL database integration with SQLAlchemy ORM
-- Docker containerization for easy deployment
-- Responsive design with customizable CSS
-- User dashboard and settings pages
-- Theme switching capability (light/dark mode)
-- Flask-Migrate for database migrations
-- Secure password hashing with Werkzeug
-- Session-based authentication
+- User authentication system (registration, login, logout)
+- Idea creation and management
+- Collaborative features (commenting, sharing)
+- User dashboard for idea overview
+- User and application settings
+- Responsive design with light/dark mode
 - RESTful API structure
+- Docker containerization for easy deployment
 
 ## Prerequisites
 
@@ -24,8 +22,8 @@ A robust boilerplate for Flask applications with user authentication, PostgreSQL
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/Py_Flask_Boilerplate.git
-   cd Py_Flask_Boilerplate
+   git clone https://github.com/yourusername/idea-incubator.git
+   cd idea-incubator
    ```
 
 2. Build and run the Docker containers:
@@ -38,7 +36,7 @@ A robust boilerplate for Flask applications with user authentication, PostgreSQL
 ## Project Structure
 
 ```
-Py_Flask_Boilerplate/
+idea-incubator/
 ├── backend/
 │   ├── templates/
 │   │   ├── base.html
@@ -66,12 +64,10 @@ Py_Flask_Boilerplate/
 
 ## Usage
 
-1. Visit the homepage at `http://localhost:5000`
-2. Register a new user account
-3. Log in with your credentials
-4. Access the dashboard
-5. Explore user settings and app settings pages
-6. Try switching between light and dark themes
+1. Visit the homepage and register a new account
+2. Log in with your credentials
+3. Start creating and managing your ideas from the dashboard
+4. Customize your experience in the user and app settings
 
 ## Development
 
@@ -125,8 +121,8 @@ This project uses Flask-Migrate for database migrations. To create and apply mig
 
 - Password hashing using Werkzeug's generate_password_hash and check_password_hash
 - Session-based authentication
-- CSRF protection (to be implemented)
-- Input validation and sanitization (to be implemented)
+- CSRF protection
+- Input validation and sanitization
 
 ## Contributing
 
