@@ -11,13 +11,6 @@ from flask_session import Session
 # Add this line to get the DELETE_DB_ON_STARTUP environment variable
 DELETE_DB_ON_STARTUP = os.environ.get('DELETE_DB_ON_STARTUP', 'false').lower() == 'true'
 
-# Function to delete all tables
-def delete_all_tables():
-    with app.app_context():
-        db.reflect()
-        db.drop_all()
-        print("All database tables dropped.")
-
 app = Flask(__name__, template_folder=os.path.abspath('templates'), static_folder=os.path.abspath('static'))
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your_secret_key')
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -42,15 +35,23 @@ migrate = Migrate(app, db)
 # Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'
+login_manager.login_view = 'login_page'
+
+# Function to delete all tables
+def delete_all_tables():
+    with app.app_context():
+        db.reflect()
+        db.drop_all()
+        print("All database tables dropped.")
 
 @login_manager.user_loader
 def load_user(user_id):
     from models import User
     return User.query.get(int(user_id))
 
-# Import routes after app is initialized to avoid circular imports
+# Import routes and models after app is initialized to avoid circular imports
 from routes import *
+from models import *
 
 def connect_to_database(retries=5, delay=5):
     for attempt in range(retries):

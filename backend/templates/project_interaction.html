@@ -3,13 +3,27 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/project_interaction.css') }}">
 {% endblock %}
-
 {% block content %}
-<div class="project-interaction">
-    <h1>{{ project.title }}</h1>
+<div class="project-interaction" data-project-id="{{ project.id }}">
+    <h1>{{ project.name }}</h1>
+    <div id="connection-info" class="connection-info">
+        <p>Connection String: <span id="api-url">{{ url_for('manage_project', project_id=project.id, _external=True) }}</span></p>
+        <p>Model Name: <span id="model-name">{{ planner_role.model if planner_role else 'N/A' }}</span></p>
+    </div>
+    {% if planner_role %}
+    <div id="role-settings" class="role-settings">
+        <h2>AI Agent - Project Planner Settings</h2>
+        <p>Provider: <span id="role-provider">{{ planner_role.provider }}</span></p>
+        <p>Model: <span id="role-model">{{ planner_role.model }}</span></p>
+        <p>System Prompt: <span id="role-system-prompt">{{ planner_role.system_prompt }}</span></p>
+        <p>Web Search: <span id="role-web-search">{% if planner_role.web_search %}Enabled{% else %}Disabled{% endif %}</span></p>
+        <p>Temperature: <span id="role-temperature">{{ planner_role.temperature }}</span></p>
+    </div>
+    {% endif %}
     <div id="chat-board" class="chat-board">
         <!-- Chat messages will be dynamically added here -->
     </div>
+    <div id="typing-indicator" class="typing-indicator" style="display: none;">AI is typing...</div>
     <div class="message-input">
         <textarea id="message-text" rows="3" placeholder="Type your message here..."></textarea>
         <button id="send-button">Send</button>
@@ -19,18 +33,105 @@
 
 {% block scripts %}
 <script>
-    // Add JavaScript for handling chat functionality here
-    document.getElementById('send-button').addEventListener('click', function() {
-        var messageText = document.getElementById('message-text').value;
-        if (messageText.trim() !== '') {
-            // Here you would typically send the message to the server
-            // For now, we'll just add it to the chat board
-            var chatBoard = document.getElementById('chat-board');
-            var messageElement = document.createElement('div');
-            messageElement.textContent = messageText;
-            chatBoard.appendChild(messageElement);
-            document.getElementById('message-text').value = '';
+    const projectId = document.querySelector('.project-interaction').dataset.projectId;
+    const chatBoard = document.getElementById('chat-board');
+    const messageInput = document.getElementById('message-text');
+    const sendButton = document.getElementById('send-button');
+    const typingIndicator = document.getElementById('typing-indicator');
+
+    let apiUrl;
+    let modelName;
+
+    async function fetchProjectDetails() {
+        const loginUrl = "{{ url_for('login_page') }}";
+        try {
+            const response = await fetch(`/api/project/${projectId}/details`);
+            if (response.ok) {
+                const data = await response.json();
+                apiUrl = data.api_url;
+                modelName = data.model_name;
+                
+                // Update the connection info display
+                document.getElementById('api-url').textContent = apiUrl || "Not set";
+                document.getElementById('model-name').textContent = modelName || "Not set";
+                
+                // Update the role settings display
+                document.getElementById('role-name').textContent = data.role_name || "Not set";
+                document.getElementById('role-provider').textContent = data.role_provider || "Not set";
+                document.getElementById('role-model').textContent = data.role_model || "Not set";
+                document.getElementById('role-system-prompt').textContent = data.role_system_prompt || "Not set";
+                document.getElementById('role-web-search').textContent = data.role_web_search;
+                document.getElementById('role-temperature').textContent = data.role_temperature || "Not set";
+                
+                // Log the values for debugging
+                console.log("Project Details:", data);
+            } else {
+                console.error('Failed to fetch project details');
+                displayMessage('system', 'Failed to load project details. Some features may not work correctly.');
+            }
+        } catch (error) {
+            console.error('Error fetching project details:', error);
+            displayMessage('system', 'Failed to load project details. Some features may not work correctly.');
+        }
+    }
+
+    // Fetch project details when the page loads
+    fetchProjectDetails();
+
+    function displayMessage(sender, message) {
+        const messageElement = document.createElement('div');
+        messageElement.className = `message ${sender}-message`;
+        messageElement.textContent = message;
+        chatBoard.appendChild(messageElement);
+        chatBoard.scrollTop = chatBoard.scrollHeight;
+    }
+
+    async function sendMessage() {
+        const messageText = messageInput.value.trim();
+        if (messageText !== '') {
+            displayMessage('user', messageText);
+            messageInput.value = '';
+
+            typingIndicator.style.display = 'block';
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: modelName,
+                        prompt: messageText,
+                        stream: false
+                    }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayMessage('ai', data.response);
+                } else {
+                    console.error('Failed to get response from AI');
+                    displayMessage('system', 'Failed to get response from AI. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                displayMessage('system', 'An error occurred. Please try again.');
+            } finally {
+                typingIndicator.style.display = 'none';
+            }
+        }
+    }
+
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            sendMessage();
         }
     });
+
+    // Fetch API details when the page loads
+    fetchApiDetails();
 </script>
 {% endblock %}

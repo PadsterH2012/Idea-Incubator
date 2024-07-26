@@ -4,6 +4,29 @@
     padding: 20px;
 }
 
+.connection-info, .role-settings {
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.connection-info p, .role-settings p {
+    margin: 5px 0;
+}
+
+.role-settings h2 {
+    font-size: 18px;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.role-settings span {
+    font-weight: bold;
+}
+
 .chat-board {
     height: 400px;
     border: 1px solid #ccc;

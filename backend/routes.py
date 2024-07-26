@@ -7,6 +7,18 @@ from flask_login import login_user, login_required, logout_user, current_user
 from functools import wraps
 import json
 
+# Move the login_required decorator definition here
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            app.logger.warning("User not in session, redirecting to index")
+            if request.headers.get('Accept') == 'application/json':
+                return jsonify({'message': 'Unauthorized'}), 401
+            return redirect(url_for('index', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route('/project/<int:project_id>/interact')
 @login_required
 def project_interaction(project_id):
@@ -251,16 +263,17 @@ def create_project():
     return jsonify({'success': True, 'message': 'Project created successfully'})
 
 @app.route('/project/<int:project_id>', methods=['GET', 'PUT', 'DELETE'])
+@login_required
 def manage_project(project_id):
-    if 'user_id' not in session:
-        return jsonify({'message': 'Unauthorized'}), 401
-    
-    project = Project.query.filter_by(id=project_id, user_id=session['user_id']).first()
+    project = Project.query.filter_by(id=project_id, user_id=current_user.id).first()
     if not project:
         return jsonify({'message': 'Project not found'}), 404
 
     if request.method == 'GET':
-        return jsonify(project.to_dict())
+        # Fetch the AI Agent Project Planner role
+        planner_role = Role.query.filter_by(name='AI Agent Project Planner').first()
+        
+        return render_template('project_interaction.html', project=project, planner_role=planner_role)
     
     elif request.method == 'PUT':
         data = request.json
@@ -273,3 +286,31 @@ def manage_project(project_id):
         db.session.delete(project)
         db.session.commit()
         return jsonify({'success': True, 'message': 'Project deleted successfully'})
+    
+@app.route('/api/project/<int:project_id>/details', methods=['GET'])
+@login_required
+def get_project_details(project_id):
+    project = Project.query.get_or_404(project_id)
+    
+    # Fetch the "AI Agent - Project Planner" role
+    planner_role = Role.query.filter_by(name="AI Agent - Project Planner").first()
+    
+    if not planner_role:
+        return jsonify({"error": "AI Agent - Project Planner role not found"}), 404
+    
+    # Fetch the ProviderSettings for the current user
+    provider_settings = ProviderSettings.query.filter_by(user_id=current_user.id).first()
+    
+    if not provider_settings:
+        return jsonify({"error": "Provider settings not found"}), 404
+    
+    return jsonify({
+        "api_url": provider_settings.ollama_url or "Not set",
+        "model_name": planner_role.model or "Not set",
+        "role_name": planner_role.name,
+        "role_provider": planner_role.provider or "Not set",
+        "role_model": planner_role.model or "Not set",
+        "role_system_prompt": planner_role.system_prompt or "Not set",
+        "role_web_search": "Enabled" if planner_role.web_search else "Disabled",
+        "role_temperature": planner_role.temperature or "Not set"
+    })
